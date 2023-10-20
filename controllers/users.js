@@ -1,10 +1,10 @@
 const UserModel = require('../models/user');
 
-const checkLength = (fieldName, minLength, maxLength) => {
+const checkLengthFailed = (fieldName, minLength, maxLength) => {
   if (fieldName === undefined) {
-    return false;
+    return true;
   }
-  return fieldName.length < minLength || fieldName.length > maxLength;
+  return fieldName.length > minLength && fieldName.length < maxLength;
 };
 
 const createUser = (req, res) => {
@@ -31,7 +31,7 @@ const getUserById = (req, res) => {
   UserModel.findById(userId)
     .then((user) => {
       if (!user) {
-        return res.status(404).send({ massage: 'Пользователь по указанному _id не найден.' });
+        return res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
       }
       return res.status(200).send(user);
     })
@@ -45,14 +45,14 @@ const getUserById = (req, res) => {
 
 const updateUser = (req, res) => {
   const { name, about } = req.body;
-  if (checkLength(name, 2, 30) === false || checkLength(about, 2, 30) === false) {
+  if (checkLengthFailed(name, 2, 30) === false || checkLengthFailed(about, 2, 30) === false) {
     return res.status(400).send({ message: 'Переданы некорректные данные при обновлении пользователя' });
   }
 
   return UserModel.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
     .then((data) => {
       if (!data) {
-        return res.status(404).send({ massage: 'Пользователь по указанному _id не найден.' });
+        return res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
       }
       return res.status(200).send(data);
     })
@@ -69,7 +69,7 @@ const updateUserAvatar = (req, res) => {
   UserModel.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
     .then((data) => {
       if (!data) {
-        return res.status(404).send({ massage: 'Пользователь по указанному _id не найден.' });
+        return res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
       }
       return res.status(200).send(data);
     })
