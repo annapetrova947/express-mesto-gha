@@ -3,31 +3,24 @@ const express = require('express');
 const { PORT = 3000 } = process.env;
 
 const mongoose = require('mongoose');
-const UserModel = require('./models/user');
+const appRouter = require('./routes/index');
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
 });
 
 const app = express();
+app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('Hello');
+app.use((req, res, next) => {
+  req.user = {
+    _id: '65309e665e92b72b96afdd1d',
+  };
+
+  next();
 });
 
-app.post('/users', (req, res) => {
-  const userData = req.body;
-  console.log(req.body);
-
-  return UserModel.create(userData)
-    .then((data) => res.status(201).send(data))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: 'Server Error' });
-    });
-});
+app.use(appRouter);
 
 app.listen(PORT, () => {
   // console.log(`App listening port ${PORT}`);
