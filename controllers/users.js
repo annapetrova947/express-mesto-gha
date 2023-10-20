@@ -1,15 +1,17 @@
 const UserModel = require('../models/user');
 
+const checkLength = (fieldName, minLength, maxLength) => {
+  if (fieldName === undefined) {
+    return false;
+  }
+  return fieldName.length < minLength || fieldName.length > maxLength;
+};
+
 const createUser = (req, res) => {
   const userData = req.body;
 
   return UserModel.create(userData)
-    .then((user) => res.status(201).send({
-      name: user.name,
-      about: user.about,
-      avatar: user.avatar,
-      email: user.email,
-    }))
+    .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя.' });
@@ -31,9 +33,7 @@ const getUserById = (req, res) => {
       if (!user) {
         return res.status(404).send({ massage: 'Пользователь по указанному _id не найден.' });
       }
-      return res.status(200).send({
-        data: user,
-      });
+      return res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -45,8 +45,11 @@ const getUserById = (req, res) => {
 
 const updateUser = (req, res) => {
   const { name, about } = req.body;
+  if (checkLength(name, 2, 30) === false || checkLength(about, 2, 30) === false) {
+    return res.status(400).send({ message: 'Переданы некорректные данные при обновлении пользователя' });
+  }
 
-  UserModel.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
+  return UserModel.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
     .then((data) => {
       if (!data) {
         return res.status(404).send({ massage: 'Пользователь по указанному _id не найден.' });
@@ -54,7 +57,7 @@ const updateUser = (req, res) => {
       return res.status(200).send(data);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'ValidationError') {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
       }
       return res.status(500).send({ message: 'Произошла ошибка на сервере.' });
@@ -71,7 +74,7 @@ const updateUserAvatar = (req, res) => {
       return res.status(200).send(data);
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'ValidationError') {
         return res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
       }
       return res.status(500).send({ message: 'Произошла ошибка на сервере.' });
