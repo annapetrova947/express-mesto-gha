@@ -45,18 +45,20 @@ const createUser = (req, res, next) => {
 const login = (req, res, next) => {
   const { email, password } = req.body;
   UserModel.findOne({ email })
+    .select('+password')
     .then((user) => {
       if (!user) {
         next(new UnauthorizedError('Пользователь не существует.'));
       }
-      return bcrypt.compare(password, user.password, (err, isVaalidPassword) => {
-        if (!isVaalidPassword) {
-          next(new UnauthorizedError('Проверьте почту и пароль.'));
+      // console.log('user', user.password, password);
+      return bcrypt.compare(password, user.password, (err, isValidPassword) => {
+        if (isValidPassword) {
+          const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
+            expiresIn: '7d',
+          });
+          return res.status(Codes.Ok).send({ token });
         }
-        const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
-          expiresIn: '7d',
-        });
-        return res.status(Codes.Ok).send({ token });
+        return next(new UnauthorizedError('Проверьте почту и пароль.'));
       });
     });
 };
