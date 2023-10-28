@@ -29,6 +29,10 @@ const createUser = (req, res, next) => {
     .catch((e) => {
       if (e.code === 11000) {
         next(new CoflictError(e.message));
+      } else if (e.name === 'ValidationError') {
+        next(new BadRequestError('Переданы некорректные данные при регистрации пользователя'));
+      } else {
+        next(e);
       }
     });
 };
