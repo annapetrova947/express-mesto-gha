@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET = 'SECRET_KEY' } = process.env;
 
 const auth = (req, res, next) => {
-  const token = req.headers.authorization;
+  const authtorization = req.headers.authorization;
+  const token = authtorization.replace('Bearer ', '');
   if (!token) {
     res.status(401).send({ message: 'Необходимо авторизоваться' });
   }

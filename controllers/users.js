@@ -5,7 +5,7 @@ const Codes = require('../utils/utils');
 
 const BadRequestError = require('../errors/badRequestError');
 const NotFoundError = require('../errors/notFoundError');
-const ForbiddenError = require('../errors/forbiddenError');
+// const ForbiddenError = require('../errors/forbiddenError');
 const CoflictError = require('../errors/conflictError');
 const UnauthorizedError = require('../errors/unauthorizedError');
 
@@ -47,7 +47,7 @@ const login = (req, res, next) => {
   UserModel.findOne({ email })
     .then((user) => {
       if (!user) {
-        next(new ForbiddenError('Пользователь не существует.'));
+        next(new UnauthorizedError('Пользователь не существует.'));
       }
       return bcrypt.compare(password, user.password, (err, isVaalidPassword) => {
         if (!isVaalidPassword) {
@@ -56,7 +56,7 @@ const login = (req, res, next) => {
         const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
           expiresIn: '7d',
         });
-        return res.status(Codes.Ok).send(token);
+        return res.status(Codes.Ok).send({ token });
       });
     });
 };
