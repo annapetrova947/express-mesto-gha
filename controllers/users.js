@@ -7,10 +7,14 @@ const BadRequestError = require('../errors/badRequestError');
 const NotFoundError = require('../errors/notFoundError');
 const ForbiddenError = require('../errors/forbiddenError');
 const CoflictError = require('../errors/conflictError');
+const UnauthorizedError = require('../errors/unauthorizedError');
 
 const { JWT_SECRET = 'SECRET_KEY' } = process.env;
 
 const createUser = (req, res, next) => {
+  if (!req.body.password || !req.body.email) {
+    next(new BadRequestError('Передайте email и password'));
+  }
   bcrypt.hash(req.body.password, 10)
     .then((hash) => UserModel.create({
       email: req.body.email,
@@ -27,6 +31,7 @@ const createUser = (req, res, next) => {
       _id: user._id,
     }))
     .catch((e) => {
+      // console.log('e', e.statusCode);
       if (e.code === 11000) {
         next(new CoflictError(e.message));
       } else if (e.name === 'ValidationError') {
@@ -46,7 +51,7 @@ const login = (req, res, next) => {
       }
       return bcrypt.compare(password, user.password, (err, isVaalidPassword) => {
         if (!isVaalidPassword) {
-          next(new ForbiddenError('Проверьте почту и пароль.'));
+          next(new UnauthorizedError('Проверьте почту и пароль.'));
         }
         const token = jwt.sign({ _id: user._id }, JWT_SECRET, {
           expiresIn: '7d',
