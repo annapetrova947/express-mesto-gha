@@ -30,16 +30,16 @@ const deleteCard = (req, res, next) => {
 
   CardModel.findById(cardId)
     .then((card) => {
-      if (!card) {
-        next(new NotFoundError('Карточка с указанным _id не найдена.'));
+      if (card) {
+        const owner = card.owner.toString();
+        if (req.user._id === owner) {
+          return CardModel.deleteOne(card)
+            .then(() => res.send(card))
+            .catch((err) => next(err));
+        }
+        return next(new ForbiddenError('Нельзя удалять карточку другого пользователя'));
       }
-      const owner = card.owner.toString();
-      if (req.user._id === owner) {
-        return CardModel.deleteOne(card)
-          .then(() => res.send(card))
-          .catch((err) => next(err));
-      }
-      return next(new ForbiddenError('Нельзя удалять карточку другого пользователя'));
+      return next(new NotFoundError('Карточка с указанным _id не найдена.'));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -56,10 +56,10 @@ const likeCard = (req, res, next) => {
     { new: true },
   )
     .then((data) => {
-      if (!data) {
-        next(new NotFoundError('Карточка с указанным _id не найдена.'));
+      if (data) {
+        return res.status(Codes.Ok).send(data);
       }
-      return res.status(Codes.Ok).send(data);
+      return next(new NotFoundError('Карточка с указанным _id не найдена.'));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -72,14 +72,14 @@ const likeCard = (req, res, next) => {
 const dislikeCard = (req, res, next) => {
   CardModel.findByIdAndUpdate(
     req.params.cardId,
-    { $pull: { likes: req.user._id } }, // убрать _id из массива
+    { $pull: { likes: req.user._id } },
     { new: true },
   )
     .then((data) => {
-      if (!data) {
-        next(new NotFoundError('Карточка с указанным _id не найдена.'));
+      if (data) {
+        return res.status(Codes.Ok).send(data);
       }
-      return res.status(Codes.Ok).send(data);
+      return next(new NotFoundError('Карточка с указанным _id не найдена.'));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
