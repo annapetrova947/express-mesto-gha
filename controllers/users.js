@@ -73,10 +73,10 @@ const getUserById = (req, res, next) => {
   const { userId } = req.params;
   UserModel.findById(userId)
     .then((user) => {
-      if (!user) {
-        next(new NotFoundError('Пользователь по указанному _id не найден.'));
+      if (user) {
+        return res.status(Codes.Ok).send(user);
       }
-      return res.status(Codes.Ok).send(user);
+      return next(new NotFoundError('Пользователь по указанному _id не найден.'));
     })
     .catch((err) => {
       if (err.name === 'CastError') {

@@ -9,7 +9,11 @@ const urlTemplate = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9
 usersRouter.get('/', getUsers);
 usersRouter.get('/me', getMe);
 
-usersRouter.get('/:userId', getUserById);
+usersRouter.get('/:userId', celebrate({
+  params: Joi.object().keys({
+    userId: Joi.string().length(24).hex().required(),
+  }),
+}), getUserById);
 
 usersRouter.patch('/me', celebrate({
   body: Joi.object().keys({
