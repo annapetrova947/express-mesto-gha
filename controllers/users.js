@@ -12,9 +12,6 @@ const UnauthorizedError = require('../errors/unauthorizedError');
 const { JWT_SECRET = 'SECRET_KEY' } = process.env;
 
 const createUser = (req, res, next) => {
-  if (!req.body.password || !req.body.email) {
-    next(new BadRequestError('Передайте email и password'));
-  }
   bcrypt.hash(req.body.password, 10)
     .then((hash) => UserModel.create({
       email: req.body.email,
@@ -48,7 +45,7 @@ const login = (req, res, next) => {
     .select('+password')
     .then((user) => {
       if (!user) {
-        next(new UnauthorizedError('Пользователь не существует.'));
+        return next(new UnauthorizedError('Пользователь не существует.'));
       }
       // console.log('user', user.password, password);
       return bcrypt.compare(password, user.password, (err, isValidPassword) => {
@@ -60,7 +57,8 @@ const login = (req, res, next) => {
         }
         return next(new UnauthorizedError('Проверьте почту и пароль.'));
       });
-    });
+    })
+    .catch((err) => next(err));
 };
 
 const getUsers = (req, res, next) => {
@@ -80,9 +78,9 @@ const getUserById = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new BadRequestError('Пользователь не найден'));
+        return next(new BadRequestError('Пользователь не найден'));
       }
-      next(err);
+      return next(err);
     });
 };
 
@@ -96,15 +94,15 @@ const updateUser = (req, res, next) => {
   )
     .then((data) => {
       if (!data) {
-        next(new NotFoundError('Пользователь по указанному _id не найден.'));
+        return next(new NotFoundError('Пользователь по указанному _id не найден.'));
       }
       return res.status(Codes.Ok).send(data);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные при обновлении профиля.'));
+        return next(new BadRequestError('Переданы некорректные данные при обновлении профиля.'));
       }
-      next(err);
+      return next(err);
     });
 };
 
@@ -113,15 +111,15 @@ const updateUserAvatar = (req, res, next) => {
   UserModel.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
     .then((data) => {
       if (!data) {
-        next(new NotFoundError('Пользователь по указанному _id не найден.'));
+        return next(new NotFoundError('Пользователь по указанному _id не найден.'));
       }
       return res.status(Codes.Ok).send(data);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные при обновлении аватара.'));
+        return next(new BadRequestError('Переданы некорректные данные при обновлении аватара.'));
       }
-      next(err);
+      return next(err);
     });
 };
 
@@ -129,7 +127,7 @@ const getMe = (req, res, next) => {
   UserModel.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        next(new NotFoundError('Нет такого пользователя'));
+        return next(new NotFoundError('Нет такого пользователя'));
       }
       return res.status(200).send(user);
     })
